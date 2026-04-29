@@ -1,0 +1,92 @@
+syntax = "proto3";
+package proto.rental;
+
+service RentalService {
+    rpc CreateRental            (CreateRentalRequest)            returns (CreateRentalResponse);
+    rpc GetRental               (GetRentalRequest)               returns (GetRentalResponse);
+    rpc GetRentalsByUser        (GetRentalsByUserRequest)        returns (GetRentalsByUserResponse);
+    rpc GetBookedDates          (GetBookedDatesRequest)          returns (GetBookedDatesResponse);
+    rpc ListRentals             (ListRentalsRequest)             returns (ListRentalsResponse);
+    rpc UpdateRental            (UpdateRentalRequest)            returns (UpdateRentalResponse);
+    rpc DeleteRental            (DeleteRentalRequest)            returns (DeleteRentalResponse);
+    rpc GetQueuedReservation    (GetQueuedReservationRequest)    returns (GetQueuedReservationResponse);
+}
+
+message CreateRentalRequest {
+    string user_id = 1;
+    string car_id = 2;
+    string start_date = 3;
+    string end_date = 4;
+}
+
+message CreateRentalResponse {
+    string rental_id = 1;
+    bool success = 2;
+    string message = 3;
+}
+
+message GetRentalRequest {
+    string rental_id = 1;
+}
+
+message GetRentalResponse {
+    string rental_id = 1;
+    string user_id = 2;
+    string car_id = 3;
+    string start_date = 4;
+    string end_date = 5;
+}
+
+message GetRentalsByUserRequest {
+    string user_id = 1;
+}
+
+message GetRentalsByUserResponse {
+    repeated GetRentalResponse rentals = 1;
+}
+
+message GetBookedDatesRequest {
+    string car_id = 1;
+}
+
+message GetBookedDatesResponse {
+    repeated string dates = 1;
+}
+
+message ListRentalsRequest {}
+
+message ListRentalsResponse {
+    repeated GetRentalResponse rentals = 1;
+}
+
+message UpdateRentalRequest {
+    string rental_id = 1;
+    string start_date = 2;
+    string end_date = 3;
+}
+
+message UpdateRentalResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message DeleteRentalRequest {
+    string rental_id = 1;
+}
+
+message DeleteRentalResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message GetQueuedReservationRequest {
+    string queue_id = 1;
+}
+
+message GetQueuedReservationResponse {
+    string queue_id = 1;
+    string status = 2;
+    string rejection_reason = 3;
+    string rental_id = 4;
+}
+

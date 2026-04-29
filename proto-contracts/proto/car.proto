@@ -1,0 +1,75 @@
+syntax = "proto3";
+package proto.car;
+
+service CarService {
+  rpc ListCars  (ListCarsRequest)  returns (ListCarsResponse);
+  rpc GetCar    (GetCarRequest)    returns (GetCarResponse);
+  rpc CreateCar (CreateCarRequest) returns (CreateCarResponse);
+  rpc UpdateCar (UpdateCarRequest) returns (UpdateCarResponse);
+  rpc DeleteCar (DeleteCarRequest) returns (DeleteCarResponse);
+}
+
+message GetCarRequest {
+  string car_id = 1;
+}
+
+message ListCarsRequest {}
+
+message ListCarsResponse {
+  repeated CarItem cars = 1;
+}
+
+message CarItem {
+  string car_id        = 1;
+  string make          = 2;
+  string model         = 3;
+  int32  year          = 4;
+  double price_per_day = 5;
+  string image_url     = 6;
+}
+
+message GetCarResponse {
+  string car_id        = 1;
+  string make          = 2;
+  string model         = 3;
+  int32  year          = 4;
+  double price_per_day = 5;
+  string image_url     = 6;
+}
+
+message CreateCarRequest {
+  string make          = 1;
+  string model         = 2;
+  int32  year          = 3;
+  double price_per_day = 4;
+  string image_url     = 5;
+}
+
+message CreateCarResponse {
+  string car_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message UpdateCarRequest {
+  string car_id        = 1;
+  string make          = 2;
+  string model         = 3;
+  int32  year          = 4;
+  double price_per_day = 5;
+  string image_url     = 6;
+}
+
+message UpdateCarResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message DeleteCarRequest {
+  string car_id = 1;
+}
+
+message DeleteCarResponse {
+  bool success = 1;
+  string message = 2;
+}

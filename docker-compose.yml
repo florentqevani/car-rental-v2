@@ -1,0 +1,167 @@
+services:
+  # ─── Message Broker ────────────────────────────────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    restart: unless-stopped
+    ports:
+      - "15672:15672" # management UI (admin / admin)
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ─── Database ─────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sh:/docker-entrypoint-initdb.d/00_init.sh
+      - ./docker/postgres/auth-user.sql:/docker-entrypoint-initdb.d/auth-user.sql
+      - ./docker/postgres/car.sql:/docker-entrypoint-initdb.d/car.sql
+      - ./docker/postgres/rental.sql:/docker-entrypoint-initdb.d/rental.sql
+      - ./docker/postgres/payment.sql:/docker-entrypoint-initdb.d/payment.sql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ─── Microservices ─────────────────────────────────────────────────────────────
+  auth-service:
+    build:
+      context: .
+      dockerfile: auth-service/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 50054
+      AUTHDB_URL: postgresql://postgres:password@postgres:5432/user_service_db
+      JWT_SECRET: ${JWT_SECRET:-supersecretjwt_change_me}
+
+  user-service:
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 50051
+      DB_URL: postgresql://postgres:password@postgres:5432/user_service_db
+      JWT_SECRET: ${JWT_SECRET:-supersecretjwt_change_me}
+
+  car-service:
+    build:
+      context: .
+      dockerfile: car-service/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 50053
+      DB_URL: postgresql://postgres:password@postgres:5432/car_service_db
+
+  rental-service:
+    build:
+      context: .
+      dockerfile: rental-service/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      PORT: 50052
+      DB_URL: postgresql://postgres:password@postgres:5432/rental_service_db
+      RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: payment-service/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 50055
+      DB_URL: postgresql://postgres:password@postgres:5432/payment_service_db
+
+  # ─── API Gateway (REST, port 3001) ─────────────────────────────────────────────
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-getaway/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    depends_on:
+      - auth-service
+      - user-service
+      - car-service
+      - rental-service
+      - payment-service
+    environment:
+      PORT: 3000
+      AUTH_SERVICE_URL: auth-service:50054
+      USER_SERVICE_URL: user-service:50051
+      CAR_SERVICE_URL: car-service:50053
+      RENTAL_SERVICE_URL: rental-service:50052
+      PAYMENT_SERVICE_URL: payment-service:50055
+
+  # ─── Web BFF ───────────────────────────────────────────────────────────────────
+  web-bff:
+    build:
+      context: .
+      dockerfile: web-bff/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - auth-service
+      - user-service
+      - car-service
+      - rental-service
+      - payment-service
+      - rabbitmq
+    volumes:
+      - uploads_data:/app/web-bff/uploads
+    environment:
+      PORT: 4000
+      JWT_SECRET: ${JWT_SECRET:-supersecretjwt_change_me}
+      RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672
+      AUTH_SERVICE_URL: auth-service:50054
+      USER_SERVICE_URL: user-service:50051
+      CAR_SERVICE_URL: car-service:50053
+      RENTAL_SERVICE_URL: rental-service:50052
+      PAYMENT_SERVICE_URL: payment-service:50055
+
+  # ─── Web Frontend (nginx, port 80) ─────────────────────────────────────────────
+  web-frontend:
+    build:
+      context: .
+      dockerfile: web-frontend/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - web-bff
+
+volumes:
+  postgres_data:
+  uploads_data:
+  rabbitmq_data:
