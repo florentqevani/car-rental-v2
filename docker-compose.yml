@@ -103,28 +103,6 @@ services:
       PORT: 50055
       DB_URL: postgresql://postgres:password@postgres:5432/payment_service_db
 
-  # ─── API Gateway (REST, port 3001) ─────────────────────────────────────────────
-  api-gateway:
-    build:
-      context: .
-      dockerfile: api-getaway/Dockerfile
-    restart: unless-stopped
-    ports:
-      - "3001:3000"
-    depends_on:
-      - auth-service
-      - user-service
-      - car-service
-      - rental-service
-      - payment-service
-    environment:
-      PORT: 3000
-      AUTH_SERVICE_URL: auth-service:50054
-      USER_SERVICE_URL: user-service:50051
-      CAR_SERVICE_URL: car-service:50053
-      RENTAL_SERVICE_URL: rental-service:50052
-      PAYMENT_SERVICE_URL: payment-service:50055
-
   # ─── Web BFF ───────────────────────────────────────────────────────────────────
   web-bff:
     build:
@@ -149,6 +127,14 @@ services:
       CAR_SERVICE_URL: car-service:50053
       RENTAL_SERVICE_URL: rental-service:50052
       PAYMENT_SERVICE_URL: payment-service:50055
+      # ── RaiAccept sandbox credentials ─────────────────────────────────────────
+      # Generate these in the Merchant portal: https://portal.raiaccept.com
+      RAIACCEPT_USERNAME: ${RAIACCEPT_USERNAME:-your-sandbox-username}
+      RAIACCEPT_PASSWORD: ${RAIACCEPT_PASSWORD:-your-sandbox-password}
+      # Public URL of the frontend app (used for successUrl / failUrl redirects)
+      RAIACCEPT_APP_URL: ${RAIACCEPT_APP_URL:-http://localhost}
+      # Public URL of web-bff (used for the notification webhook)
+      RAIACCEPT_WEBHOOK_URL: ${RAIACCEPT_WEBHOOK_URL:-http://web-bff:4000}
 
   # ─── Web Frontend (nginx, port 80) ─────────────────────────────────────────────
   web-frontend:

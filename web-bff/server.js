@@ -11,6 +11,7 @@ const authRoutes = require('./routes/auth');
 const carsRoutes = require('./routes/cars');
 const reservationsRoutes = require('./routes/reservations');
 const usersRoutes = require('./routes/users');
+const paymentsRoutes = require('./routes/payments');
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/cars', carsRoutes);
 app.use('/api/reservations', reservationsRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/payments', paymentsRoutes);
 
 // 404
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
