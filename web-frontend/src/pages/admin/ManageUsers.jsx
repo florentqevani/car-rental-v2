@@ -3,17 +3,21 @@ import api from '../../api/client';
 
 export default function ManageUsers() {
     const [users, setUsers] = useState([]);
+    const [reservations, setReservations] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         api.get('/users').then(setUsers).catch(() => { }).finally(() => setLoading(false));
+        api.get('/reservations').then(setReservations).catch(() => { }).finally(() => setLoading(false));
     }, []);
+
 
     async function handleDelete(id) {
         if (!window.confirm('Delete this user?')) return;
         try {
             await api.delete(`/users/${id}`);
             setUsers(prev => prev.filter(u => u.id !== id));
+            setReservations(prev => prev.filter(r => r.user_id !== id));
         } catch (err) {
             alert(err.message);
         }

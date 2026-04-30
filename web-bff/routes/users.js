@@ -45,9 +45,14 @@ router.put('/:id', authenticate, async (req, res) => {
     }
 });
 
-// DELETE /api/users/:id
+// DELETE /api/users/:id — also cancels all reservations for the user
 router.delete('/:id', authenticate, requireAdmin, async (req, res) => {
     try {
+        // Fetch all rentals for this user and cancel them
+        const rentalsResult = await call(clients.rental, 'getRentalsByUser', { user_id: req.params.id }).catch(() => ({ rentals: [] }));
+        const rentals = rentalsResult.rentals || [];
+        await Promise.all(rentals.map(r => call(clients.rental, 'deleteRental', { rental_id: r.rental_id }).catch(() => { })));
+
         const result = await call(clients.user, 'deleteUser', { user_id: req.params.id });
         res.json(result);
     } catch (err) {

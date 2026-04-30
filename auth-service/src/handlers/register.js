@@ -13,7 +13,7 @@ async function register(call, callback) {
         const existingUser = result.rows;
         if (existingUser.length > 0) {
             return callback({
-                code: 400,
+                code: 6,  // ALREADY_EXISTS
                 message: 'Email already registered'
             });
         }
@@ -44,7 +44,7 @@ async function register(call, callback) {
     catch (error) {
         console.error('Error during registration:', error);
         callback({
-            code: 500,
+            code: 13,  // INTERNAL
             message: 'Internal server error'
         });
     }

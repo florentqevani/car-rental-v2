@@ -12,7 +12,7 @@ async function login(call, callback) {
         const user = result.rows;
         if (user.length === 0) {
             return callback({
-                code: 400,
+                code: 16,  // UNAUTHENTICATED
                 message: 'Invalid username or password'
             });
         }
@@ -20,7 +20,7 @@ async function login(call, callback) {
         const validPassword = await bcrypt.compare(password, user[0].password);
         if (!validPassword) {
             return callback({
-                code: 400,
+                code: 16,  // UNAUTHENTICATED
                 message: 'Invalid username or password'
             });
         }
@@ -45,7 +45,7 @@ async function login(call, callback) {
     catch (error) {
         console.error('Error during login:', error);
         callback({
-            code: 500,
+            code: 13,  // INTERNAL
             message: 'Internal server error'
         });
     }

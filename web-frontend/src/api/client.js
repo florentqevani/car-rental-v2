@@ -26,8 +26,9 @@ async function request(method, path, body) {
 
     let res = await fetch(`${API_BASE}${path}`, options);
 
-    // Auto-refresh on 401
-    if (res.status === 401) {
+    // Auto-refresh on 401 — skip for auth endpoints (their 401 is a real error, not expiry)
+    const isAuthEndpoint = path.startsWith('/auth/');
+    if (res.status === 401 && !isAuthEndpoint) {
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
             const refreshRes = await fetch(`${API_BASE}/auth/refresh`, {

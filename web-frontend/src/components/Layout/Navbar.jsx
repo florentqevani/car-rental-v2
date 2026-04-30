@@ -15,7 +15,7 @@ export default function Navbar() {
         <nav className="navbar">
             <div className="navbar-inner">
                 <Link to="/" className="navbar-brand">
-                    Drive<span>Ease</span>
+                    DriveEase
                 </Link>
 
                 <button
