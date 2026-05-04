@@ -29,25 +29,49 @@ router.get('/booked/:carId', async (req, res) => {
     }
 });
 
-// GET /api/reservations/mine — authenticated user's own reservations
+// GET /api/reservations/mine — authenticated user's own reservations (confirmed + pending/rejected queued)
 router.get('/mine', authenticate, async (req, res) => {
     try {
-        const result = await call(clients.rental, 'getRentalsByUser', { user_id: req.user.user_id });
-        const rentals = result.rentals || [];
+        const [rentalResult, queuedResult] = await Promise.allSettled([
+            call(clients.rental, 'getRentalsByUser', { user_id: req.user.user_id }),
+            call(clients.rental, 'getQueuedReservationsByUser', { user_id: req.user.user_id }),
+        ]);
 
-        const uniqueCarIds = [...new Set(rentals.map(r => r.car_id))];
+        const rentals = rentalResult.status === 'fulfilled' ? rentalResult.value.rentals || [] : [];
+        const queued = queuedResult.status === 'fulfilled' ? queuedResult.value.reservations || [] : [];
+
+        const allCarIds = [...new Set([...rentals.map(r => r.car_id), ...queued.map(r => r.car_id)])];
         const cars = await Promise.all(
-            uniqueCarIds.map(id => call(clients.car, 'getCar', { car_id: id }).catch(() => ({ car_id: id })))
+            allCarIds.map(id => call(clients.car, 'getCar', { car_id: id }).catch(() => ({ car_id: id })))
         );
         const carMap = Object.fromEntries(cars.map(c => [String(c.car_id), c]));
 
-        res.json(rentals.map(r => ({
+        const confirmed = rentals.map(r => ({
             ...mapRental(r),
+            status: 'confirmed',
             car_name: carMap[String(r.car_id)]
                 ? `${carMap[String(r.car_id)].make || ''} ${carMap[String(r.car_id)].model || ''}`.trim()
                 : r.car_id,
             car_image_url: carMap[String(r.car_id)]?.image_url || '',
-        })));
+        }));
+
+        const pendingOrRejected = queued.map(r => ({
+            id: r.queue_id,
+            queue_id: r.queue_id,
+            car_id: r.car_id,
+            pickup_date: r.start_date,
+            return_date: r.end_date,
+            start_date: r.start_date,
+            end_date: r.end_date,
+            status: r.status,
+            rejection_reason: r.rejection_reason || '',
+            car_name: carMap[String(r.car_id)]
+                ? `${carMap[String(r.car_id)].make || ''} ${carMap[String(r.car_id)].model || ''}`.trim()
+                : r.car_id,
+            car_image_url: carMap[String(r.car_id)]?.image_url || '',
+        }));
+
+        res.json([...confirmed, ...pendingOrRejected]);
     } catch (err) {
         res.status(grpcStatus(err)).json({ error: err.message });
     }

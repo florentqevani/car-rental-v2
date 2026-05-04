@@ -8,7 +8,6 @@ module.exports = {
         user: process.env.USER_SERVICE_URL || 'localhost:50051',
         car: process.env.CAR_SERVICE_URL || 'localhost:50053',
         rental: process.env.RENTAL_SERVICE_URL || 'localhost:50052',
-        payment: process.env.PAYMENT_SERVICE_URL || 'localhost:50055',
     },
     raiaccept: {
         // RaiAccept sandbox credentials — generate in the Merchant portal (Sandbox tab)

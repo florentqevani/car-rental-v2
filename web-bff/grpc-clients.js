@@ -19,7 +19,6 @@ const authDef = grpc.loadPackageDefinition(loadProto('auth.proto')).proto.auth;
 const userDef = grpc.loadPackageDefinition(loadProto('user.proto')).proto.user;
 const carDef = grpc.loadPackageDefinition(loadProto('car.proto')).proto.car;
 const rentalDef = grpc.loadPackageDefinition(loadProto('rental.proto')).proto.rental;
-const paymentDef = grpc.loadPackageDefinition(loadProto('payment.proto')).proto.payment;
 
 const creds = grpc.credentials.createInsecure();
 
@@ -28,7 +27,6 @@ const clients = {
     user: new userDef.UserService(config.services.user, creds),
     car: new carDef.CarService(config.services.car, creds),
     rental: new rentalDef.RentalService(config.services.rental, creds),
-    payment: new paymentDef.PaymentService(config.services.payment, creds),
 };
 
 module.exports = clients;

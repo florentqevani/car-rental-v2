@@ -9,7 +9,8 @@ service RentalService {
     rpc ListRentals             (ListRentalsRequest)             returns (ListRentalsResponse);
     rpc UpdateRental            (UpdateRentalRequest)            returns (UpdateRentalResponse);
     rpc DeleteRental            (DeleteRentalRequest)            returns (DeleteRentalResponse);
-    rpc GetQueuedReservation    (GetQueuedReservationRequest)    returns (GetQueuedReservationResponse);
+    rpc GetQueuedReservation          (GetQueuedReservationRequest)          returns (GetQueuedReservationResponse);
+    rpc GetQueuedReservationsByUser   (GetQueuedReservationsByUserRequest)   returns (GetQueuedReservationsByUserResponse);
 }
 
 message CreateRentalRequest {
@@ -88,5 +89,23 @@ message GetQueuedReservationResponse {
     string status = 2;
     string rejection_reason = 3;
     string rental_id = 4;
+}
+
+message QueuedReservationItem {
+    string queue_id = 1;
+    string car_id = 2;
+    string start_date = 3;
+    string end_date = 4;
+    string status = 5;
+    string rejection_reason = 6;
+    string queued_at = 7;
+}
+
+message GetQueuedReservationsByUserRequest {
+    string user_id = 1;
+}
+
+message GetQueuedReservationsByUserResponse {
+    repeated QueuedReservationItem reservations = 1;
 }
 

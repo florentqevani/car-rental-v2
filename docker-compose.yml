@@ -30,7 +30,6 @@ services:
       - ./docker/postgres/auth-user.sql:/docker-entrypoint-initdb.d/auth-user.sql
       - ./docker/postgres/car.sql:/docker-entrypoint-initdb.d/car.sql
       - ./docker/postgres/rental.sql:/docker-entrypoint-initdb.d/rental.sql
-      - ./docker/postgres/payment.sql:/docker-entrypoint-initdb.d/payment.sql
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
@@ -91,18 +90,6 @@ services:
       DB_URL: postgresql://postgres:password@postgres:5432/rental_service_db
       RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672
 
-  payment-service:
-    build:
-      context: .
-      dockerfile: payment-service/Dockerfile
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      PORT: 50055
-      DB_URL: postgresql://postgres:password@postgres:5432/payment_service_db
-
   # ─── Web BFF ───────────────────────────────────────────────────────────────────
   web-bff:
     build:
@@ -114,7 +101,6 @@ services:
       - user-service
       - car-service
       - rental-service
-      - payment-service
       - rabbitmq
     volumes:
       - uploads_data:/app/web-bff/uploads
@@ -126,7 +112,6 @@ services:
       USER_SERVICE_URL: user-service:50051
       CAR_SERVICE_URL: car-service:50053
       RENTAL_SERVICE_URL: rental-service:50052
-      PAYMENT_SERVICE_URL: payment-service:50055
       # ── RaiAccept sandbox credentials ─────────────────────────────────────────
       # Generate these in the Merchant portal: https://portal.raiaccept.com
       RAIACCEPT_USERNAME: ${RAIACCEPT_USERNAME:-your-sandbox-username}

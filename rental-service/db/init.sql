@@ -1,4 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION IF NOT EXISTS btree_gist;
 CREATE DATABASE rental_service_db;
 \c rental_service_db;
 CREATE TABLE IF NOT EXISTS rentals (
@@ -9,7 +10,11 @@ CREATE TABLE IF NOT EXISTS rentals (
     end_date   DATE         NOT NULL,
     created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_dates CHECK (end_date >= start_date)
+    CONSTRAINT chk_dates CHECK (end_date >= start_date),
+    CONSTRAINT no_overlapping_rentals EXCLUDE USING GIST (
+        car_id WITH =,
+        daterange(start_date, end_date, '[)') WITH &&
+    )
 );
 
 CREATE INDEX IF NOT EXISTS idx_rentals_user_id ON rentals (user_id);

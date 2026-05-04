@@ -81,12 +81,31 @@ async function startConsumer() {
                     );
                     console.log('[MQ] Reservation rejected (conflict), queue_id:', queue_id, 'user:', user_id);
                 } else {
-                    const result = await pool.query(
-                        `INSERT INTO rentals (user_id, car_id, start_date, end_date)
-                         VALUES ($1, $2, $3, $4) RETURNING id`,
-                        [user_id, car_id, start_date, end_date]
-                    );
-                    const rental_id = result.rows[0].id;
+                    let rental_id;
+                    try {
+                        const result = await pool.query(
+                            `INSERT INTO rentals (user_id, car_id, start_date, end_date)
+                             VALUES ($1, $2, $3, $4) RETURNING id`,
+                            [user_id, car_id, start_date, end_date]
+                        );
+                        rental_id = result.rows[0].id;
+                    } catch (insertErr) {
+                        // PostgreSQL exclusion constraint violation (23P01) or unique violation (23505)
+                        if (insertErr.code === '23P01' || insertErr.code === '23505') {
+                            await pool.query(
+                                `UPDATE queued_reservations
+                                 SET status = 'rejected',
+                                     rejection_reason = $1,
+                                     processed_at = NOW()
+                                 WHERE id = $2`,
+                                ['Car is already booked for the selected dates.', queue_id]
+                            );
+                            console.log('[MQ] Reservation rejected (DB constraint), queue_id:', queue_id, 'user:', user_id);
+                            ch.ack(msg);
+                            return;
+                        }
+                        throw insertErr;
+                    }
 
                     await pool.query(
                         `UPDATE queued_reservations

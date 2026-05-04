@@ -117,21 +117,7 @@ router.post('/confirm', authenticate, async (req, res) => {
             }
         }
 
-        // 3. Record payment in the payment-service DB
-        const rentalId = queued ? queueId : rental.rental_id;
-        try {
-            await call(clients.payment, 'createPayment', {
-                rental_id: rentalId,
-                user_id: req.user.user_id,
-                amount: parseFloat(amount),
-                currency,
-            });
-        } catch (payErr) {
-            // Non-fatal — rental was created successfully; log and continue
-            console.error('[payments/confirm] payment record failed:', payErr.message);
-        }
-
-        // 4. Respond
+        // 3. Respond
         if (queued) {
             return res.status(202).json({
                 queued: true,

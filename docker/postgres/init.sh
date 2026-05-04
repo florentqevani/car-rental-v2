@@ -6,7 +6,6 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE DATABASE user_service_db;
     CREATE DATABASE car_service_db;
     CREATE DATABASE rental_service_db;
-    CREATE DATABASE payment_service_db;
 EOSQL
 
 # Initialize each database schema
@@ -18,6 +17,3 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "car_service_db" \
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "rental_service_db" \
     -f /docker-entrypoint-initdb.d/rental.sql
-
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "payment_service_db" \
-    -f /docker-entrypoint-initdb.d/payment.sql
